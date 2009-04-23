@@ -1,0 +1,38 @@
+CachedAssetNames
+================
+
+Caching is King as they say, but if you cache your static assets and deploy
+new versions of them then some proxy servers such as Squid won't be able to
+use Rails built-in cache busting to detect new versions.
+
+This plugin rewrites stylesheet, image and javascript asset paths constructed
+by Rails so that the proxies do detect new versions.
+
+Example
+=======
+
+If you're using Apache you'll want to add something like this to your virtual
+host configuration.
+
+  # Rewrite the URLs this plugin creates to the actual files on disk.
+  #
+  RewriteEngine On
+  RewriteRule (.*)-v\d+\.(.*)$ $1.$2 [L]
+
+  # Set the static assets to expire from client caches one year in the future
+  #
+  # Note that the HTTP RFC says that servers SHOULD NOT serve expires headers
+  # for more than one year from access.
+  #
+  <FilesMatch "\.(js|css|png|jpe?g|gif)$">
+    ExpiresActive On
+    ExpiresDefault "access plus 1 year"
+  </FilesMatch>
+
+Beyond that you just need to have this plugin in your Rails vendor/plugins.
+
+Authors
+=======
+Craig R Webster <http://barkingiguana.com/~craig>
+
+Copyright (c) 2009 Craig R Webster, released under the MIT license
