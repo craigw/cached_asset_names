@@ -29,5 +29,32 @@ if ActionController::Base.perform_caching
         path.split("?").first
       end
     end
+
+    def write_asset_file_contents_with_cached_asset_names(asset_file_path, asset_paths)
+      write_asset_file_contents_without_cached_asset_names(asset_file_path, asset_paths)
+      if asset_file_path =~ /\.css$/
+        asset_file_contents = File.read(asset_file_path).split(/\n/)
+        asset_file_contents.map! { |line|
+          if line =~ /url\((\'?\/images\/.*\'?)\)/
+            uri = line.scan(/url\((\'?\/images\/.*\'?)\)/).to_a[0].to_a[0]
+            destination_parts = uri.split(/\./)
+            file_ext = destination_parts.pop
+            destination_parts[-1] += "-v#{BUILD_NUMBER}"
+            destination_parts.push file_ext
+            destination = destination_parts.join('.')
+            RAILS_DEFAULT_LOGGER.info "[cache] Rewriting #{uri} to cached url #{destination} in #{asset_file_path}"
+            line.gsub!(uri, destination)
+            line
+          else
+            line
+          end
+        }
+        File.open(asset_file_path, 'w') do |f|
+          f.write asset_file_contents
+          f.flush
+        end
+      end
+    end
+    alias_method_chain :write_asset_file_contents, :cached_asset_names
   end
 end
