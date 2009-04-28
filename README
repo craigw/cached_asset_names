@@ -14,20 +14,37 @@ Example
 If you're using Apache you'll want to add something like this to your virtual
 host configuration.
 
-  # Rewrite the URLs this plugin creates to the actual files on disk.
-  #
   RewriteEngine On
-  RewriteRule (.*)-v\d+\.(.*)$ $1.$2 [L]
 
-  # Set the static assets to expire from client caches one year in the future
+  <LocationMatch "^/(images|javascripts|stylesheets)/.*$">
+    # The Last-Modified time has the same effect as an ETag here
+    # so let's not waste bytes in the request/response.
+    #
+    Header unset ETag
+    FileETag None
+  </LocationMatch>
+
+  # We use cached-busting location names with the far-future expires headers
+  # to ensure that if a file does change it can force a new request. The actual
+  # filenames are still the same though so we need to rewrite the location.
   #
-  # Note that the HTTP RFC says that servers SHOULD NOT serve expires headers
-  # for more than one year from access.
-  #
-  <FilesMatch "\.(js|css|png|jpe?g|gif)$">
+  RewriteRule ^/(images|javascripts|stylesheets)/(.*)-v\d+\.(.*)$ /$1/$2.$3 [L]
+
+  <LocationMatch "^/(images|javascripts|stylesheets)/(.*)-v\d+\.(.*)$">
+    # Some browsers still send conditional-GET requests if there's a
+    # Last-Modified header even if the asset hasn't reached the expiry
+    # date set in the Expires header yet.
+    #
+    Header unset Last-Modified
+
+    # Assets requested using a cache-busting filename should be served only once
+    # and then cached for A BILLION YEARS. The HTTP/1.1 spec frowns on that though
+    # and suggestst that assets which never expire be served with a 1 year
+    # expiration date
+    #
     ExpiresActive On
     ExpiresDefault "access plus 1 year"
-  </FilesMatch>
+  </LocationMatch>
 
 Beyond that you just need to have this plugin in your Rails vendor/plugins.
 
