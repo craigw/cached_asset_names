@@ -1,6 +1,9 @@
 if ActionController::Base.perform_caching
   ActionView::Helpers::AssetTagHelper.class_eval do
     def rewrite_asset_path(source)
+      RAILS_DEFAULT_LOGGER.warn "The cached_asset_names plugin " +
+                                "functionality has been included in Rails. " +
+                                "The plugin is now deprecated."
       asset_id = rails_asset_id(source)
       if asset_id.blank?
         source
@@ -30,6 +33,13 @@ if ActionController::Base.perform_caching
       end
     end
 
+    def build_number
+      # Ideally you should set this to the build number of your deployment to
+      # get consistent versions across all of your application servers, but
+      # we need to provide a default just in case.
+      @@build_number ||= Time.now.to_i
+    end
+
     def write_asset_file_contents_with_cached_asset_names(asset_file_path, asset_paths)
       write_asset_file_contents_without_cached_asset_names(asset_file_path, asset_paths)
       if asset_file_path =~ /\.css$/
@@ -39,7 +49,7 @@ if ActionController::Base.perform_caching
             uri = line.scan(/url\((\'?\/images\/.*\'?)\)/).to_a[0].to_a[0]
             destination_parts = uri.split(/\./)
             file_ext = destination_parts.pop
-            destination_parts[-1] += "-v#{BUILD_NUMBER}"
+            destination_parts[-1] += "-v#{build_number}"
             destination_parts.push file_ext
             destination = destination_parts.join('.')
             RAILS_DEFAULT_LOGGER.info "[cache] Rewriting #{uri} to cached url #{destination} in #{asset_file_path}"

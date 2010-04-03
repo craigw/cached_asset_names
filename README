@@ -1,6 +1,14 @@
 CachedAssetNames
 ================
 
+==============================================================================
+THE FUNCTIONALITY OF THIS PLUGIN HAS BEEN ADDED TO RAILS CORE. THE PLUGIN IS 
+NOW DEPRECATED AND IS ONLY AVAILABLE AS A HISTORIC INTEREST.
+
+SEE THIS COMMIT TO RAILS FOR THE PREFERRED WAY OF SETTING THE ASSET PATH TO 
+MAKE IT MORE CACHE-FRIENDLY: http://github.com/rails/rails/commit/49bc6a249e2a200216f8a96c36093a2c7a471c9b
+==============================================================================
+
 Caching is King as they say, but if you cache your static assets and deploy
 new versions of them then some proxy servers such as Squid won't be able to
 use Rails built-in cache busting to detect new versions.
